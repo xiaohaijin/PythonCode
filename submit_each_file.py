@@ -2,19 +2,23 @@
 
 
 import os
-import shutil
+import stat
 
 
 def getFileList(fileDir):
     fileList = os.listdir(fileDir)
-    return  fileList
+    newFileList = []
+    for eachFile in fileList:
+        if eachFile[:31] not in newFileList:
+            newFileList.append(eachFile)
+    return newFileList
 
 
 def createSubmitFile(eventRootName):
     fileName = str(eventRootName).split("_")[4]
     submitComtent = """Universe     = vanilla
 Notification = Error
-Initialdir   = /star/u/yjye/SC_GL/run2018/Isobar/submit/9/output
+Initialdir   = /star/u/jhai/selfSC_GL/test/submit/submit6.8_9
 Executable   = $(Initialdir)/run47.csh
 Arguments    = $(Process)
 Log          = $(Initialdir)/log/job47_$(Process).log
@@ -28,7 +32,7 @@ Queue 1"""
     fileObject = open(fileName + ".con", "w")
     for eachLine in submitComtentResult:
         if eachLine.lower().startswith("executable"):
-            eachLine = "Executable   = $(Initialdir)/" + fileName + ".sh"
+            eachLine = "Executable   = $(Initialdir)/" + fileName + ".csh"
         fileObject.write(eachLine+'\n')
     fileObject.close()
 
@@ -45,15 +49,17 @@ root4star -b -q -l 'doEvents_SCGL_Calib.C(5000,"./output/*19072018_raw_5000008*"
     for eachLine in shellContentResult:
         eachLine.strip('\n')
         if eachLine.lower().startswith("root4star"):
-            eachLine = """root4star -b -q -l 'doEvents_SCGL_Calib.C(5000,"./output/""" + eventRootName + """")'"""
+            eachLine = """root4star -b -q -l 'doEvents_SCGL_Calib.C(5000,"/star/u/jhai/scratch/test/""" + eventRootName + "*" + """")'"""
         fileObject.write(eachLine+"\n")
     fileObject.close()
+    os.chmod(fileName + ".csh", stat.S_IRWXU)
 
 
 def main():
-    fileDir = "/home/xiaohai/Desktop/submit"
+    fileDir = "/star/u/jhai/scratch/test"
     eventFileList = getFileList(fileDir)
     for eachEventFile in eventFileList:
+        eachEventFile = eachEventFile[:31]
         createRunShell(eachEventFile)
         createSubmitFile(eachEventFile)
 
